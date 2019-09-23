@@ -28,6 +28,7 @@ private:
 	void notifyAboutWork(int resultOfCalculating);
 	void calculate();
 	void checkKeyCancelation();
+	void showPrompt(int interval);
 	int numberOfFunctions;
 	bool oneOfResultsIsZero;
 	bool workIsFinished;

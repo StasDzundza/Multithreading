@@ -1,6 +1,8 @@
 #include "TaskSynchronizator.h"
 #include <numeric>
 #include <functional>
+#include <chrono>
+
 
 TaskSynchronizator::TaskSynchronizator() : oneOfResultsIsZero{ false }, workIsFinished{ false }, type{ OperationType::Mult } {
 	numberOfFunctions = 0;
@@ -54,13 +56,15 @@ void TaskSynchronizator::setOperationType(OperationType type){
 }
 
 void TaskSynchronizator::start(){
-	thread t(&TaskSynchronizator::checkKeyCancelation,this);
-	t.detach();
+	thread keyChecker(&TaskSynchronizator::checkKeyCancelation,this);
+	keyChecker.detach();
+	thread prompt(&TaskSynchronizator::showPrompt,this,10);
+	prompt.detach();
 
 	attachFunctionsToThreads();
 
 	std::unique_lock<mutex>locker(mtx);
-	cv.wait(locker);
+	cv.wait(locker, [this]() {return workIsFinished == true; });
 
 	if (!oneOfResultsIsZero && !numberOfFunctions && workIsFinished){
 		calculate();
@@ -81,13 +85,50 @@ void TaskSynchronizator::calculate(){
 
 void TaskSynchronizator::checkKeyCancelation()
 {
-	char c;
+	char c = 65;
 	do {
-		c = _getch();
+		if (_kbhit()) {
+			c = _getch();
+		}
 	} while (c != 27);
 	workIsFinished = true;
 	stopAllThreads();
 	cv.notify_one();
+}
+
+void TaskSynchronizator::showPrompt(int interval)
+{
+	std::this_thread::sleep_for(std::chrono::seconds(interval));
+	std::cout << "Enter option : \n"
+		"1.Continue calculation.\n"
+		"2.Continue without prompt.\n"
+		"3.Cancel calculation. \n";
+	char choice = 65;
+	do {
+		if (_kbhit()){
+			choice = _getch();
+		}		
+	} while (choice != '1' && choice != '2' && choice != '3');
+
+	switch (choice)
+	{
+		case '1': {
+			std::cout << "Continue was chosed.\n\n";
+			showPrompt(interval);
+			break;
+		}
+		case '2': {
+			std::cout << "Continue without prompt was chosed.\n\n";
+			break;
+		}
+		case '3': {
+			std::cout << "Cancel was chosed.\n\n";
+			stopAllThreads();
+			workIsFinished = true;
+			cv.notify_one();
+			break;
+		}
+	}
 }
 
 void TaskSynchronizator::calculateMult(){

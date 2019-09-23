@@ -12,15 +12,15 @@ int main() {
 	task->setX(x);
 
 	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(3));
+		std::this_thread::sleep_for(chrono::seconds(15));
 		return 15 * x; });
 
 	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(10));
+		std::this_thread::sleep_for(chrono::seconds(35));
 		return 140 * x + 126; });
 
 	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(7));
+		std::this_thread::sleep_for(chrono::seconds(30));
 		return 150 * x - 25; });
 
 	task->start();

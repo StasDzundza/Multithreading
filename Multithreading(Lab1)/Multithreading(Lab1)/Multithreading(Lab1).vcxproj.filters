@@ -21,12 +21,18 @@
     <ClCompile Include="TaskSynchronizator.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Prompt.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Functions.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="TaskSynchronizator.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Prompt.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
