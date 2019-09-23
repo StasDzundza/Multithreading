@@ -54,6 +54,9 @@ void TaskSynchronizator::setOperationType(OperationType type){
 }
 
 void TaskSynchronizator::start(){
+	thread t(&TaskSynchronizator::checkKeyCancelation,this);
+	t.detach();
+
 	attachFunctionsToThreads();
 
 	std::unique_lock<mutex>locker(mtx);
@@ -66,7 +69,7 @@ void TaskSynchronizator::start(){
 		if(oneOfResultsIsZero)
 			std::cout << "Result of calculation is zero "<< std::endl;
 		else {
-			std::cout << "Canculation was canceled by user " << std::endl;
+			std::cout << "Calculation was canceled by user " << std::endl;
 		}
 	}
 }
@@ -74,6 +77,17 @@ void TaskSynchronizator::start(){
 void TaskSynchronizator::calculate(){
 	if (type == OperationType::Mult)
 		calculateMult();
+}
+
+void TaskSynchronizator::checkKeyCancelation()
+{
+	char c;
+	do {
+		c = _getch();
+	} while (c != 27);
+	workIsFinished = true;
+	stopAllThreads();
+	cv.notify_one();
 }
 
 void TaskSynchronizator::calculateMult(){

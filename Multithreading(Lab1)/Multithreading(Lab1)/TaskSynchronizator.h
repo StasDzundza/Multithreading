@@ -5,7 +5,7 @@
 #include<thread>
 #include <mutex>
 #include <condition_variable>
-#include <concurrent_vector.h>
+#include <conio.h>
 
 using std::function;
 using std::vector;
@@ -20,13 +20,14 @@ public:
 	void addFunction(const function<int(int)>& f);
 	void setX(int x);
 	void start();
-	void calculate();
-	void attachFunctionsToThreads();
-	void notifyAboutWork(int resultOfCalculating);
 	void setOperationType(OperationType type);
 private:
 	void calculateMult();
 	void stopAllThreads();
+	void attachFunctionsToThreads();
+	void notifyAboutWork(int resultOfCalculating);
+	void calculate();
+	void checkKeyCancelation();
 	int numberOfFunctions;
 	bool oneOfResultsIsZero;
 	bool workIsFinished;
