@@ -16,11 +16,14 @@ using std::condition_variable;
 class TaskSynchronizator {
 public:
 	enum class OperationType {Mult};
+	enum class CancelationType { Esc_Key,Prompt };
 	TaskSynchronizator();
 	void addFunction(const function<int(int)>& f);
-	void setX(int x);
+	void setX(const int& x);
 	void start();
 	void setOperationType(OperationType type);
+	void setCancelationType(CancelationType type);
+	void clearSettings();
 private:
 	void calculateMult();
 	void stopAllThreads();
@@ -28,12 +31,13 @@ private:
 	void notifyAboutWork(int resultOfCalculating);
 	void calculate();
 	void checkKeyCancelation();
-	void showPrompt(int interval);
+	void showPrompt(const int& interval);
 	int numberOfFunctions;
 	bool oneOfResultsIsZero;
 	bool workIsFinished;
 	int x;
-	OperationType type;
+	OperationType operationType;
+	CancelationType cancelationType;
 	mutex mtx;
 	condition_variable cv;
 	vector<thread>threads;

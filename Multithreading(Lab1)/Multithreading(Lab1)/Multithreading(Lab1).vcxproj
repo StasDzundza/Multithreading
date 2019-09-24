@@ -125,12 +125,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Prompt.cpp" />
     <ClCompile Include="TaskSynchronizator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Functions.h" />
-    <ClInclude Include="Prompt.h" />
     <ClInclude Include="TaskSynchronizator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

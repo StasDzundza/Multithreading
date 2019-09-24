@@ -1,30 +1,24 @@
 #include"TaskSynchronizator.h"
 #include<exception>
+#include"Functions.h"
 
 using namespace std;
 
 int main() {
 	TaskSynchronizator* task = new TaskSynchronizator;
-	
-	int x;
-	std::cout << "Enter the x argument " << std::endl;
-	std::cin >> x;
-	task->setX(x);
-
-	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(15));
-		return 15 * x; });
-
-	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(35));
-		return 140 * x + 126; });
-
-	task->addFunction([](int x) {
-		std::this_thread::sleep_for(chrono::seconds(30));
-		return 150 * x - 25; });
-
-	task->start();
+	task->setCancelationType(TaskSynchronizator::CancelationType::Esc_Key);
+	for (int i = 0; i < 6; i++)
+	{
+		int x;
+		std::cout << "Enter the x argument " << std::endl;	
+		std::cin.clear();
+		std::cin >> x;
+		task->setX(x);
+		task->addFunction(spos::f_func<spos::INT>);
+		task->addFunction(spos::g_func<spos::INT>);
+		task->start();
+		task->clearSettings();
+	}
 	delete task;
-
 	return 0;
 }

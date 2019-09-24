@@ -41,16 +41,16 @@ namespace spos {
 	template<>
 	struct op_group_traits<INT> : op_group_type_traits<int> {
 		constexpr static case_type cases[] = {
-		{.f_attrs = pair(1s, 3),.g_attrs = pair(3s, 5) }, // pair<duration, int>
-		{.f_attrs = pair(3s, 3),.g_attrs = pair(1s, 5) },
-		{.f_attrs = pair(3s, 0),.g_attrs = {} },
-		{.f_attrs = {},.g_attrs = pair(3s, 0) },
-		{.f_attrs = pair(3s, 1),.g_attrs = {} },
-		{.f_attrs = {},.g_attrs = pair(5s, 1) }
+		{ pair(1s, 3),pair(3s, 5) }, // pair<duration, int>
+		{pair(3s, 3),pair(1s, 5) },
+		{pair(3s, 0),{} },
+		{{}, pair(3s, 0) },
+		{pair(3s, 1), {} },
+		{{},pair(5s, 1) }
 		};
 	};
 
-	template<>
+	/*template<>
 	struct op_group_traits<DOUBLE> : op_group_type_traits<double> {
 		constexpr static case_type cases[] = {
 		{.f_attrs = pair(1s, 3.),.g_attrs = pair(3s, 5.) },
@@ -84,7 +84,7 @@ namespace spos {
 		{.f_attrs = pair(3s, false),.g_attrs = {} },
 		{.f_attrs = {},.g_attrs = pair(5s, false) }
 		};
-	};
+	};*/
 
 
 	template<op_group O> typename op_group_traits<O>::value_type f_func(int case_nr) {

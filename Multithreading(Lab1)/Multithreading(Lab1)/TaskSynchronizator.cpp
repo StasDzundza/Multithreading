@@ -4,7 +4,11 @@
 #include <chrono>
 
 
-TaskSynchronizator::TaskSynchronizator() : oneOfResultsIsZero{ false }, workIsFinished{ false }, type{ OperationType::Mult } {
+TaskSynchronizator::TaskSynchronizator() {
+	oneOfResultsIsZero = false;
+	workIsFinished = false;
+	operationType = TaskSynchronizator::OperationType::Mult;
+	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
 	x = 100;
 }
@@ -15,12 +19,12 @@ void TaskSynchronizator::addFunction(const function<int(int)>& f){
 	functionResults.push_back(-1);
 }
 
-void TaskSynchronizator::setX(int x){
+void TaskSynchronizator::setX(const int& x){
 	this->x = x;
 }
 
 void TaskSynchronizator::attachFunctionsToThreads(){
-	threads.resize(numberOfFunctions);
+	threads.resize(numberOfFunctions + 1);//+1 because we also should save 1 thread for cancelation
 	for (int i = 0; i < numberOfFunctions; i++)	{
 		threads[i] = thread([this, i]() {
 			int res = functions[i](this->x);
@@ -39,8 +43,6 @@ void TaskSynchronizator::notifyAboutWork(int resultOfCalculating){
 
 	std::unique_lock<std::mutex> locker(mtx);
 
-	std::cout << "Functions with id " << numberOfFunctions-- << " finished work with result " << resultOfCalculating << std::endl;
-
 	if (resultOfCalculating == 0) {
 		oneOfResultsIsZero = true;
 		workIsFinished = true;
@@ -52,16 +54,32 @@ void TaskSynchronizator::notifyAboutWork(int resultOfCalculating){
 }
 
 void TaskSynchronizator::setOperationType(OperationType type){
-	this->type = type;
+	this->operationType = type;
+}
+
+void TaskSynchronizator::setCancelationType(CancelationType type){
+	this->cancelationType = type;
+}
+
+void TaskSynchronizator::clearSettings(){
+	threads.clear();
+	functions.clear();
+	functionResults.clear();
 }
 
 void TaskSynchronizator::start(){
-	thread keyChecker(&TaskSynchronizator::checkKeyCancelation,this);
-	keyChecker.detach();
-	thread prompt(&TaskSynchronizator::showPrompt,this,10);
-	prompt.detach();
 
 	attachFunctionsToThreads();
+
+	if (cancelationType == TaskSynchronizator::CancelationType::Esc_Key) {
+		threads[numberOfFunctions] = thread([this]() { checkKeyCancelation(); });
+		threads[numberOfFunctions].detach();
+	}
+	else {
+
+		threads[numberOfFunctions] = thread([this]() { showPrompt(5); });
+		threads[numberOfFunctions].detach();
+	}
 
 	std::unique_lock<mutex>locker(mtx);
 	cv.wait(locker, [this]() {return workIsFinished == true; });
@@ -79,7 +97,7 @@ void TaskSynchronizator::start(){
 }
 
 void TaskSynchronizator::calculate(){
-	if (type == OperationType::Mult)
+	if (operationType == OperationType::Mult)
 		calculateMult();
 }
 
@@ -87,16 +105,14 @@ void TaskSynchronizator::checkKeyCancelation()
 {
 	char c = 65;
 	do {
-		if (_kbhit()) {
-			c = _getch();
-		}
+		c = _getch();
 	} while (c != 27);
 	workIsFinished = true;
 	stopAllThreads();
 	cv.notify_one();
 }
 
-void TaskSynchronizator::showPrompt(int interval)
+void TaskSynchronizator::showPrompt(const int& interval)
 {
 	std::this_thread::sleep_for(std::chrono::seconds(interval));
 	std::cout << "Enter option : \n"
@@ -105,24 +121,19 @@ void TaskSynchronizator::showPrompt(int interval)
 		"3.Cancel calculation. \n";
 	char choice = 65;
 	do {
-		if (_kbhit()){
-			choice = _getch();
-		}		
+		std::cin >> choice;
 	} while (choice != '1' && choice != '2' && choice != '3');
 
 	switch (choice)
 	{
 		case '1': {
-			std::cout << "Continue was chosed.\n\n";
 			showPrompt(interval);
 			break;
 		}
 		case '2': {
-			std::cout << "Continue without prompt was chosed.\n\n";
 			break;
 		}
 		case '3': {
-			std::cout << "Cancel was chosed.\n\n";
 			stopAllThreads();
 			workIsFinished = true;
 			cv.notify_one();
