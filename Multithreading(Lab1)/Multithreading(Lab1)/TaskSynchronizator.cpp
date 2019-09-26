@@ -8,6 +8,7 @@
 TaskSynchronizator::TaskSynchronizator() {
 	oneOfResultsIsZero = false;
 	workIsFinished = false;
+	inputIsWaiting = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
@@ -87,9 +88,13 @@ void TaskSynchronizator::start(){
 	std::unique_lock<mutex>locker(mtx);
 	cv.wait(locker, [this]() {return workIsFinished == true; });
 
+	if(inputIsWaiting)
+		clearInput();
+
 	if (!oneOfResultsIsZero && !numberOfFunctions && workIsFinished){
 		calculate();
 	}
+
 	else {
 		if(oneOfResultsIsZero)
 			std::cout << "Result of calculation is zero "<< std::endl;
@@ -115,8 +120,9 @@ void TaskSynchronizator::checkKeyCancelation()
 {
 	char choice = 65;
 	do {
-		//while (!_kbhit()) {}
+		inputIsWaiting = true;
 		choice = _getch();
+		inputIsWaiting = false;
 	} while (choice != 27);
 	if (!workIsFinished)
 	{
@@ -137,7 +143,9 @@ void TaskSynchronizator::showPrompt(int interval)
 				"3.Cancel calculation. \n";
 			char choice = 65;
 			do {
+				inputIsWaiting = true;
 				std::cin >> choice;
+				inputIsWaiting = false;
 			} while (choice != '1' && choice != '2' && choice != '3');
 
 			if (!workIsFinished) {
@@ -164,6 +172,40 @@ void TaskSynchronizator::showPrompt(int interval)
 	
 }
 
+void TaskSynchronizator::clearInput(){
+	if (cancelationType == TaskSynchronizator::CancelationType::Esc_Key) {
+		// Set up a generic keyboard event.
+		INPUT ip;
+		ip.type = INPUT_KEYBOARD;
+		ip.ki.wScan = 0; // hardware scan code for key
+		ip.ki.time = 0;
+		ip.ki.dwExtraInfo = 0;
+
+		// Press the Esc key
+		ip.ki.wVk = 0x1B; // virtual-key code for the Esc key
+		ip.ki.dwFlags = 0; // 0 for key press
+		SendInput(1, &ip, sizeof(INPUT));
+	}
+	else {
+		// Set up a generic keyboard event.
+		INPUT ip;
+		ip.type = INPUT_KEYBOARD;
+		ip.ki.wScan = 0; // hardware scan code for key
+		ip.ki.time = 0;
+		ip.ki.dwExtraInfo = 0;
+
+		// Press the 1 key
+		ip.ki.wVk = 0x31; // virtual-key code for the 1 key
+		ip.ki.dwFlags = 0; // 0 for key press
+		SendInput(1, &ip, sizeof(INPUT));
+		ip.ki.wVk = 0x0D;//Enter Key
+		SendInput(1, &ip, sizeof(INPUT));
+		_putch('\b');
+		_putch(' ');
+		_putch('\b');
+	}
+}
+
 void TaskSynchronizator::calculateMult(){
 	int result = std::accumulate(functionResults.begin(), functionResults.end(), 1, std::multiplies<int>());
 	std::cout << "Result of calculation is " << result << std::endl;
@@ -172,9 +214,6 @@ void TaskSynchronizator::calculateMult(){
 void TaskSynchronizator::stopAllThreads()
 {
 	for (int i = 0; i < threads.size(); i++) {
-		//threads[i].~thread();
 		TerminateThread(threads[i].native_handle(), 0);
-	
 	}
-
 }

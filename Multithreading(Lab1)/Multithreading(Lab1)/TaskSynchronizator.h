@@ -29,6 +29,7 @@ public:
 	void setCancelationType(CancelationType type);
 	void clearSettings();
 private:
+	void clearInput();
 	void calculateMult();
 	void stopAllThreads();
 	void attachFunctionsToThreads();
@@ -39,6 +40,7 @@ private:
 	int numberOfFunctions;
 	bool oneOfResultsIsZero;
 	bool workIsFinished;
+	bool inputIsWaiting;
 	int x;
 	OperationType operationType;
 	CancelationType cancelationType;
