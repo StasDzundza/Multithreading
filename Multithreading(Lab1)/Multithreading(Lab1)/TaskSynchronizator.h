@@ -41,6 +41,7 @@ private:
 	bool oneOfResultsIsZero;
 	bool workIsFinished;
 	bool inputIsWaiting;
+	bool promptIsShowing;
 	int x;
 	OperationType operationType;
 	CancelationType cancelationType;

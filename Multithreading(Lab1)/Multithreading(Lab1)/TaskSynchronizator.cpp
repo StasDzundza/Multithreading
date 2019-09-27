@@ -9,6 +9,7 @@ TaskSynchronizator::TaskSynchronizator() {
 	oneOfResultsIsZero = false;
 	workIsFinished = false;
 	inputIsWaiting = false;
+	promptIsShowing = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
@@ -86,8 +87,8 @@ void TaskSynchronizator::start(){
 	}
 
 	std::unique_lock<mutex>locker(mtx);
-	cv.wait(locker, [this]() {return workIsFinished == true; });
-
+	cv.wait(locker, [this]() { return workIsFinished == true && !promptIsShowing; });
+	
 	if(inputIsWaiting)
 		clearInput();
 
@@ -137,6 +138,7 @@ void TaskSynchronizator::showPrompt(int interval)
 	if (!workIsFinished){
 		std::this_thread::sleep_for(std::chrono::seconds(interval));
 		if (!workIsFinished) {
+			promptIsShowing = true;
 			std::cout << "Enter option : \n"
 				"1.Continue calculation.\n"
 				"2.Continue without prompt.\n"
@@ -145,6 +147,7 @@ void TaskSynchronizator::showPrompt(int interval)
 			do {
 				inputIsWaiting = true;
 				std::cin >> choice;
+				promptIsShowing = false;
 				inputIsWaiting = false;
 			} while (choice != '1' && choice != '2' && choice != '3');
 
@@ -166,8 +169,10 @@ void TaskSynchronizator::showPrompt(int interval)
 				}
 				}
 			}
-		}
-		
+			else {
+				cv.notify_one();
+			}
+		}	
 	}
 	
 }
