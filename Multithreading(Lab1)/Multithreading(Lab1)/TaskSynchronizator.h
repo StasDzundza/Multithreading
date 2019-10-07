@@ -43,6 +43,8 @@ private:
 	bool inputIsWaiting;
 	bool promptIsShowing;
 	bool cancelChoosed;
+	bool continueChoosed;
+	int numberOfResults;
 	int x;
 	bool oneOfResultsIsReady;
 	OperationType operationType;

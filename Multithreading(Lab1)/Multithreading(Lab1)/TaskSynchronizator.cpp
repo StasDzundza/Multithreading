@@ -12,10 +12,12 @@ TaskSynchronizator::TaskSynchronizator() {
 	inputIsWaiting = false;
 	promptIsShowing = false;
 	cancelChoosed = false;
+	continueChoosed = false;
 	oneOfResultsIsReady = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
+	numberOfResults = 0;
 	x = 0;
 }
 
@@ -44,7 +46,7 @@ void TaskSynchronizator::attachFunctionsToThreads(){
 }
 
 void TaskSynchronizator::notifyAboutWork(int resultOfCalculating){
-	if (workIsFinished) {//calculation is terminated variable
+	if (cancelChoosed) {
 		stopAllThreads();
 		return;
 	}
@@ -82,8 +84,9 @@ void TaskSynchronizator::start(){
 
 	int result = 1;
 	while (true) {
-		std::unique_lock<mutex>locker(mtx);//(lock mutex) в деструкторі unlock
-		cv.wait(locker, [this]() { return (!promptIsShowing && oneOfResultsIsReady) || cancelChoosed; });//звільнює лок коли засинає
+		std::unique_lock<mutex>locker(mtx);//mutex lock(constructor lock,destructor unlock)
+		cv.wait(locker, [this]() { return (oneOfResultsIsReady) || cancelChoosed || continueChoosed; });//makes lock free,when sleeping
+			//and locks when waking up
 
 			if (oneOfResultsIsReady) {
 				for (int i = 0; i < functionResults.size(); i++){
@@ -103,11 +106,13 @@ void TaskSynchronizator::start(){
 				cout << 2 << endl;
 			}
 
-			if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished) {
+			if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished || cancelChoosed) {
 				cout << "break" << numberOfFunctions << endl;
 				workIsFinished = true;
-				break;
+				if(!promptIsShowing)
+					break;
 			}
+			
 	}
 	 
 	if(inputIsWaiting)
@@ -179,22 +184,24 @@ void TaskSynchronizator::showPrompt(int interval)
 				switch (choice)
 				{
 				case '1': {
+					continueChoosed = true;
 					showPrompt(interval);
 					break;
 				}
 				case '2': {
+					continueChoosed = true;
 					break;
 				}
 				case '3': {
 					stopAllThreads();
-					workIsFinished = true;
 					cancelChoosed = true;
-					cv.notify_one();
 					break;
 				}
 				}
+				cv.notify_one();
 			}
 			else {
+				continueChoosed = true;
 				cv.notify_one();
 			}
 		}	
