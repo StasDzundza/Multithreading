@@ -86,35 +86,34 @@ void TaskSynchronizator::start(){
 	while (true) {
 		std::unique_lock<mutex>locker(mtx);//mutex lock(constructor lock,destructor unlock)
 		cv.wait(locker, [this]() { return (oneOfResultsIsReady) || cancelChoosed || continueChoosed; });//makes lock free,when sleeping
-			//and locks when waking up
-
-			if (oneOfResultsIsReady) {
-				for (int i = 0; i < functionResults.size(); i++){
-					if (functionResults[i] != -123 && !calculatedFunctions[i]) {
-						calculatedFunctions[i] = 1;
-						result *= functionResults[i];
-					}
+		//and locks when waking up
+		continueChoosed = false;
+		if (oneOfResultsIsReady) {
+			for (int i = 0; i < functionResults.size(); i++){
+				if (functionResults[i] != -123 && !calculatedFunctions[i]) {
+					calculatedFunctions[i] = 1;
+					result *= functionResults[i];
 				}
-				oneOfResultsIsReady = false;
-				numberOfFunctions--;
-				cout << 1 << endl;
 			}
+			oneOfResultsIsReady = false;
+			numberOfFunctions--;
+			cout << 1 << endl;
+		}
+	
+		if (result == 0) {
+			oneOfResultsIsZero = true;
+			workIsFinished = true;
+			cout << 0 << endl;
+		}
 
-			if (result == 0) {
-				oneOfResultsIsZero = true;
-				workIsFinished = true;
-				cout << 2 << endl;
-			}
-
-			if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished || cancelChoosed) {
-				cout << "break" << numberOfFunctions << endl;
-				workIsFinished = true;
-				if(!promptIsShowing)
-					break;
-			}
-			
+		if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished || cancelChoosed) {
+			cout << "break" << numberOfFunctions << endl;
+			workIsFinished = true;
+			if(!promptIsShowing)
+				break;
+		}		
 	}
-	 
+	promptMtx.lock();
 	if(inputIsWaiting)
 		clearInput();
 
@@ -164,9 +163,11 @@ void TaskSynchronizator::checkKeyCancelation()
 
 void TaskSynchronizator::showPrompt(int interval)
 {
+	promptMtx.lock();
 	if (!workIsFinished){
 		std::this_thread::sleep_for(std::chrono::seconds(interval));
-		if (!workIsFinished) {
+		//mtx.lock();
+		if (!workIsFinished) {			
 			promptIsShowing = true;
 			std::cout << "Enter option : \n"
 				"1.Continue calculation.\n"
@@ -179,7 +180,7 @@ void TaskSynchronizator::showPrompt(int interval)
 				promptIsShowing = false;
 				inputIsWaiting = false;
 			} while (choice != '1' && choice != '2' && choice != '3');
-
+			//mtx.unlock();
 			if (!workIsFinished) {
 				switch (choice)
 				{
@@ -197,16 +198,16 @@ void TaskSynchronizator::showPrompt(int interval)
 					cancelChoosed = true;
 					break;
 				}
-				}
+				}					
 				cv.notify_one();
 			}
 			else {
 				continueChoosed = true;
 				cv.notify_one();
 			}
-		}	
+		}			
 	}
-	
+	promptMtx.unlock();	
 }
 
 void TaskSynchronizator::clearInput(){
