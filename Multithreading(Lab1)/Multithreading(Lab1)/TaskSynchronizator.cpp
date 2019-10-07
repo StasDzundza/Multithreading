@@ -3,17 +3,20 @@
 #include <functional>
 #include <chrono>
 #include <Windows.h>
-
+using std::cout;
+using std::endl;
 
 TaskSynchronizator::TaskSynchronizator() {
 	oneOfResultsIsZero = false;
 	workIsFinished = false;
 	inputIsWaiting = false;
 	promptIsShowing = false;
+	escPressed = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
 	x = 0;
+	computationResult = -123;
 }
 
 void TaskSynchronizator::addFunction(const function<int(int)>& f, const char* name) {
@@ -31,7 +34,7 @@ void TaskSynchronizator::attachFunctionsToThreads(){
 	for (int i = 0; i < numberOfFunctions; i++)	{
 		threads[i] = thread([this, i]() {
 			int res = functions[i].first(this->x);
-			functionResults[i] = res;
+			computationResult = functionResults[i] = res;
 			notifyAboutWork(functionResults[i]);
 			});
 		threads[i].detach();
@@ -39,22 +42,11 @@ void TaskSynchronizator::attachFunctionsToThreads(){
 }
 
 void TaskSynchronizator::notifyAboutWork(int resultOfCalculating){
-	if (workIsFinished) {
+	if (workIsFinished) {//calculation is terminated variable
 		stopAllThreads();
 		return;
 	}
-	numberOfFunctions--;
-
-	std::unique_lock<std::mutex> locker(mtx);
-
-	if (resultOfCalculating == 0) {
-		oneOfResultsIsZero = true;
-		workIsFinished = true;
-	}
-	if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished){
-		workIsFinished = true;
-		cv.notify_one();
-	}
+	cv.notify_one();
 }
 
 void TaskSynchronizator::setOperationType(OperationType type){
@@ -85,15 +77,40 @@ void TaskSynchronizator::start(){
 		threads[numberOfFunctions] = thread(&TaskSynchronizator::showPrompt, this,2);
 		threads[numberOfFunctions].detach();
 	}
+	//який лок я використовую і для чого
+	//вічний цикл
+	int result = 1;
+	while (true) {
+		std::unique_lock<mutex>locker(mtx);//захистити від хибного пробудження (lock mutex) в деструкторі unlock
+		cv.wait(locker, [this]() { return (!promptIsShowing && computationResult != -123)
+			|| escPressed; });//звільнює лок коли засинає
 
-	std::unique_lock<mutex>locker(mtx);
-	cv.wait(locker, [this]() { return workIsFinished == true && !promptIsShowing; });
-	
+		//if (computationResult != -123) {//for spurious wake up
+			if (computationResult != -123) {
+				result *= computationResult;
+				computationResult = -123;
+				numberOfFunctions--;
+				cout << 1 << endl;
+			}
+			if (result == 0) {
+				oneOfResultsIsZero = true;
+				workIsFinished = true;
+				cout << 2 << endl;
+			}
+
+			if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished) {
+				cout << "break" << numberOfFunctions << endl;
+				workIsFinished = true;
+				break;
+			}
+		//}
+	}
+	 
 	if(inputIsWaiting)
 		clearInput();
 
 	if (!oneOfResultsIsZero && !numberOfFunctions && workIsFinished){
-		calculate();
+		std::cout << "Result of calculation is " << result << std::endl;
 	}
 
 	else {
@@ -125,6 +142,9 @@ void TaskSynchronizator::checkKeyCancelation()
 		choice = _getch();
 		inputIsWaiting = false;
 	} while (choice != 27);
+
+	escPressed = true;
+
 	if (!workIsFinished)
 	{
 		workIsFinished = true;
