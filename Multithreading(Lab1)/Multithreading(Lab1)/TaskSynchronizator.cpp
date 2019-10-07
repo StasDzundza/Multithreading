@@ -11,18 +11,19 @@ TaskSynchronizator::TaskSynchronizator() {
 	workIsFinished = false;
 	inputIsWaiting = false;
 	promptIsShowing = false;
-	escPressed = false;
+	cancelChoosed = false;
+	oneOfResultsIsReady = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
 	numberOfFunctions = 0;
 	x = 0;
-	computationResult = -123;
 }
 
 void TaskSynchronizator::addFunction(const function<int(int)>& f, const char* name) {
 	functions.push_back(std::make_pair(std::move(f), name));
 	++numberOfFunctions;
 	functionResults.push_back(-123);
+	calculatedFunctions.push_back(0);
 }
 
 void TaskSynchronizator::setX(int x){
@@ -34,7 +35,8 @@ void TaskSynchronizator::attachFunctionsToThreads(){
 	for (int i = 0; i < numberOfFunctions; i++)	{
 		threads[i] = thread([this, i]() {
 			int res = functions[i].first(this->x);
-			computationResult = functionResults[i] = res;
+			functionResults[i] = res;
+			oneOfResultsIsReady = true;
 			notifyAboutWork(functionResults[i]);
 			});
 		threads[i].detach();
@@ -77,21 +79,24 @@ void TaskSynchronizator::start(){
 		threads[numberOfFunctions] = thread(&TaskSynchronizator::showPrompt, this,2);
 		threads[numberOfFunctions].detach();
 	}
-	//який лок я використовую і для чого
-	//вічний цикл
+
 	int result = 1;
 	while (true) {
-		std::unique_lock<mutex>locker(mtx);//захистити від хибного пробудження (lock mutex) в деструкторі unlock
-		cv.wait(locker, [this]() { return (!promptIsShowing && computationResult != -123)
-			|| escPressed; });//звільнює лок коли засинає
+		std::unique_lock<mutex>locker(mtx);//(lock mutex) в деструкторі unlock
+		cv.wait(locker, [this]() { return (!promptIsShowing && oneOfResultsIsReady) || cancelChoosed; });//звільнює лок коли засинає
 
-		//if (computationResult != -123) {//for spurious wake up
-			if (computationResult != -123) {
-				result *= computationResult;
-				computationResult = -123;
+			if (oneOfResultsIsReady) {
+				for (int i = 0; i < functionResults.size(); i++){
+					if (functionResults[i] != -123 && !calculatedFunctions[i]) {
+						calculatedFunctions[i] = 1;
+						result *= functionResults[i];
+					}
+				}
+				oneOfResultsIsReady = false;
 				numberOfFunctions--;
 				cout << 1 << endl;
 			}
+
 			if (result == 0) {
 				oneOfResultsIsZero = true;
 				workIsFinished = true;
@@ -103,7 +108,6 @@ void TaskSynchronizator::start(){
 				workIsFinished = true;
 				break;
 			}
-		//}
 	}
 	 
 	if(inputIsWaiting)
@@ -143,7 +147,7 @@ void TaskSynchronizator::checkKeyCancelation()
 		inputIsWaiting = false;
 	} while (choice != 27);
 
-	escPressed = true;
+	cancelChoosed = true;
 
 	if (!workIsFinished)
 	{
@@ -184,6 +188,7 @@ void TaskSynchronizator::showPrompt(int interval)
 				case '3': {
 					stopAllThreads();
 					workIsFinished = true;
+					cancelChoosed = true;
 					cv.notify_one();
 					break;
 				}

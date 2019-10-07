@@ -42,9 +42,9 @@ private:
 	bool workIsFinished;
 	bool inputIsWaiting;
 	bool promptIsShowing;
-	bool escPressed;
+	bool cancelChoosed;
 	int x;
-	int computationResult;
+	bool oneOfResultsIsReady;
 	OperationType operationType;
 	CancelationType cancelationType;
 	mutex mtx;
@@ -52,5 +52,5 @@ private:
 	vector<thread>threads;
 	vector <function_and_name>functions;
 	vector<int>functionResults;
-	vector<bool>functionFlags;
+	vector<bool>calculatedFunctions;
 };
