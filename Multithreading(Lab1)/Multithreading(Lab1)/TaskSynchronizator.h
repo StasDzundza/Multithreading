@@ -36,7 +36,9 @@ private:
 	void notifyAboutWork(int resultOfCalculating);
 	void calculate();
 	void checkKeyCancelation();
-	void showPrompt(int interval);
+	bool showPrompt();
+	void promptThread(int interval);
+	bool checkResult();
 	int numberOfFunctions;
 	bool oneOfResultsIsZero;
 	bool workIsFinished;
@@ -50,7 +52,6 @@ private:
 	OperationType operationType;
 	CancelationType cancelationType;
 	mutex mtx;
-	mutex promptMtx;
 	condition_variable cv;
 	vector<thread>threads;
 	vector <function_and_name>functions;

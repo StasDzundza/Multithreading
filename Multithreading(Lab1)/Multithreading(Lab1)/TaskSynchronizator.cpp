@@ -12,7 +12,6 @@ TaskSynchronizator::TaskSynchronizator() {
 	inputIsWaiting = false;
 	promptIsShowing = false;
 	cancelChoosed = false;
-	continueChoosed = false;
 	oneOfResultsIsReady = false;
 	operationType = TaskSynchronizator::OperationType::Mult;
 	cancelationType = TaskSynchronizator::CancelationType::Esc_Key;
@@ -37,6 +36,7 @@ void TaskSynchronizator::attachFunctionsToThreads(){
 	for (int i = 0; i < numberOfFunctions; i++)	{
 		threads[i] = thread([this, i]() {
 			int res = functions[i].first(this->x);
+			std::unique_lock<mutex>lock(mtx);
 			functionResults[i] = res;
 			oneOfResultsIsReady = true;
 			notifyAboutWork(functionResults[i]);
@@ -78,60 +78,56 @@ void TaskSynchronizator::start(){
 	}
 	else {
 
-		threads[numberOfFunctions] = thread(&TaskSynchronizator::showPrompt, this,2);
+		threads[numberOfFunctions] = thread(&TaskSynchronizator::promptThread, this,2);
 		threads[numberOfFunctions].detach();
 	}
 
 	int result = 1;
 	while (true) {
-		std::unique_lock<mutex>locker(mtx);//mutex lock(constructor lock,destructor unlock)
-		cv.wait(locker, [this]() { return (oneOfResultsIsReady) || cancelChoosed || continueChoosed; });//makes lock free,when sleeping
-		//and locks when waking up
-		continueChoosed = false;
-		if (oneOfResultsIsReady) {
-			for (int i = 0; i < functionResults.size(); i++){
-				if (functionResults[i] != -123 && !calculatedFunctions[i]) {
-					calculatedFunctions[i] = 1;
-					result *= functionResults[i];
+		{
+			std::unique_lock<mutex>locker(mtx);//mutex lock(constructor lock,destructor unlock)
+			cv.wait(locker, [this]() { return oneOfResultsIsReady || cancelChoosed; });//makes lock free,when sleeping
+			//and locks when waking up
+
+			if (oneOfResultsIsReady) {
+				for (int i = 0; i < functionResults.size(); i++) {
+					if (functionResults[i] != -123 && !calculatedFunctions[i]) {
+						calculatedFunctions[i] = 1;
+						result *= functionResults[i];
+						numberOfFunctions--;
+						if (!numberOfFunctions || result == 0) {
+							workIsFinished = true;
+							break;
+						}
+					}
 				}
+				oneOfResultsIsReady = false;
 			}
-			oneOfResultsIsReady = false;
-			numberOfFunctions--;
-			cout << 1 << endl;
 		}
 	
-		if (result == 0) {
-			oneOfResultsIsZero = true;
-			workIsFinished = true;
-			cout << 0 << endl;
-		}
-
-		if (!numberOfFunctions || oneOfResultsIsZero || workIsFinished || cancelChoosed) {
-			cout << "break" << numberOfFunctions << endl;
-			workIsFinished = true;
-			if(!promptIsShowing)
-				break;
+		if (workIsFinished || cancelChoosed) {
+			stopAllThreads();
+			break;
 		}		
 	}
-	promptMtx.lock();
+	
 	if(inputIsWaiting)
 		clearInput();
 
-	if (!oneOfResultsIsZero && !numberOfFunctions && workIsFinished){
+	if (workIsFinished && result){
 		std::cout << "Result of calculation is " << result << std::endl;
 	}
 
+	else if(!result)
+		std::cout << "Result of calculation is zero "<< std::endl;
+
 	else {
-		if(oneOfResultsIsZero)
-			std::cout << "Result of calculation is zero "<< std::endl;
-		else {
-			std::cout << "Calculation was canceled by user " << std::endl;
-			std::cout << "Functions which weren`t calculated : " << std::endl;
-			int size = functions.size();
-			for (int i = 0; i < size; i++) {
-				if (functionResults[i] == -123) {
-					std::cout << functions[i].second << std::endl;
-				}
+		std::cout << "Calculation was canceled by user " << std::endl;
+		std::cout << "Functions which weren`t calculated : " << std::endl;
+		int size = functions.size();
+		for (int i = 0; i < size; i++) {
+			if (functionResults[i] == -123) {
+				std::cout << functions[i].second << std::endl;
 			}
 		}
 	}
@@ -151,63 +147,71 @@ void TaskSynchronizator::checkKeyCancelation()
 		inputIsWaiting = false;
 	} while (choice != 27);
 
-	cancelChoosed = true;
+	std::unique_lock<mutex>lock(mtx);
 
 	if (!workIsFinished)
 	{
-		workIsFinished = true;
-		stopAllThreads();
+		cancelChoosed = true;
 		cv.notify_one();
 	}
 }
 
-void TaskSynchronizator::showPrompt(int interval)
+bool TaskSynchronizator::showPrompt()
 {
-	promptMtx.lock();
-	if (!workIsFinished){
-		std::this_thread::sleep_for(std::chrono::seconds(interval));
-		//mtx.lock();
-		if (!workIsFinished) {			
-			promptIsShowing = true;
-			std::cout << "Enter option : \n"
-				"1.Continue calculation.\n"
-				"2.Continue without prompt.\n"
-				"3.Cancel calculation. \n";
-			char choice = 65;
-			do {
-				inputIsWaiting = true;
-				std::cin >> choice;
-				promptIsShowing = false;
-				inputIsWaiting = false;
-			} while (choice != '1' && choice != '2' && choice != '3');
-			//mtx.unlock();
-			if (!workIsFinished) {
-				switch (choice)
-				{
-				case '1': {
-					continueChoosed = true;
-					showPrompt(interval);
-					break;
-				}
-				case '2': {
-					continueChoosed = true;
-					break;
-				}
-				case '3': {
-					stopAllThreads();
-					cancelChoosed = true;
-					break;
-				}
-				}					
-				cv.notify_one();
-			}
-			else {
-				continueChoosed = true;
-				cv.notify_one();
-			}
-		}			
+	std::unique_lock<mutex>lock(mtx);
+
+	if (!workIsFinished){		
+		promptIsShowing = true;
+		std::cout << "Enter option : \n"
+			"1.Continue calculation.\n"
+			"2.Continue without prompt.\n"
+			"3.Cancel calculation. \n";
+		char choice = 65;
+		do {
+			inputIsWaiting = true;
+			std::cin >> choice;
+			promptIsShowing = false;
+			inputIsWaiting = false;
+		} while (choice != '1' && choice != '2' && choice != '3');
+		
+		switch (choice)
+		{
+		    case '1': {
+		    	return true;
+		    }
+		    case '2': {
+		    	return false;
+		    }
+		    case '3': {
+		    	cancelChoosed = true;
+		    	break;
+		    }
+		}					
+		cv.notify_one();
 	}
-	promptMtx.unlock();	
+
+	return false;
+}
+
+void TaskSynchronizator::promptThread(int interval){
+	do {
+		std::this_thread::sleep_for(std::chrono::seconds(interval));
+	} while (showPrompt() && !workIsFinished);
+}
+
+bool TaskSynchronizator::checkResult()
+{
+	int newNumberOfResults = 0;
+	for (int i = 0; i < functionResults.size(); i++)
+	{
+		if (functionResults[i] != -123 && !calculatedFunctions[i]) {
+			newNumberOfResults++;
+		}
+	}
+	if (newNumberOfResults > numberOfResults) {
+		numberOfResults = newNumberOfResults;
+	}
+	return false;
 }
 
 void TaskSynchronizator::clearInput(){
@@ -246,7 +250,7 @@ void TaskSynchronizator::clearInput(){
 
 void TaskSynchronizator::calculateMult(){
 	int result = std::accumulate(functionResults.begin(), functionResults.end(), 1, std::multiplies<int>());
-	std::cout << "Result of calculation is " << result << std::endl;
+	std::cout << "Result of calculation is " << result << std::endl << std::endl;
 }
 
 void TaskSynchronizator::stopAllThreads()
