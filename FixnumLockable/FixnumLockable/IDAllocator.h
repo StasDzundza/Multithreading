@@ -10,6 +10,8 @@ public:
 	void reset(unsigned int min_id, unsigned int max_id);
 private:
 	void clear_thread_id_array();
+	void reset_values(unsigned int min_id, unsigned int max_id);
+	void init_values(unsigned int min_id, unsigned int max_id);
 	int min_id = -1, max_id = -1;
 	const int MaxNumberOfThreads = 20;
 	int number_of_registered_threads = 0;

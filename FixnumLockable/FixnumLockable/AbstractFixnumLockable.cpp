@@ -8,15 +8,14 @@ AbstractFixnumLockable::AbstractFixnumLockable(IDAllocator* allocator){
 }
 
 unsigned int AbstractFixnumLockable::get_id(){
+	while (lock.test_and_set()) {}
 	if (thread_id > 0) {
-		return thread_id;
-	}
-	else {
-		while (lock.test_and_set()) {}
-		thread_id = allocator->alloc(&thread_id);
 		lock.clear();
 		return thread_id;
 	}
+	thread_id = allocator->alloc(&thread_id);
+	lock.clear();
+	return thread_id;
 }
 
 bool AbstractFixnumLockable::_register(){
@@ -28,8 +27,6 @@ bool AbstractFixnumLockable::_register(){
 
 void AbstractFixnumLockable::unregister(){
 	allocator->free(thread_id);
-	thread_id = -1;
-	int* a = &thread_id;
 }
 
 void AbstractFixnumLockable::reset(int new_max_id){
