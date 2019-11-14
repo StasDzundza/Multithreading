@@ -1,19 +1,21 @@
 #pragma once
+#include <atomic>
 
-#include"FixnumLockable.h"
-#include"IDAllocator.h"
-#include<atomic>
+#include "FixnumLockable.h"
+#include "IDAllocator.h"
 
-class AbstractFixnumLockable : public FixnumLockable {
-public:
-	AbstractFixnumLockable(IDAllocator* allocator);
-	unsigned int get_id()override;
-	bool _register()override;
-	void unregister()override;
-	void reset(int new_max_id)override;
-	void reset(int new_min_id,int new_max_id)override;
-private:
-	IDAllocator* allocator;
-	thread_local static int thread_id;
-	std::atomic_flag lock = ATOMIC_FLAG_INIT;
-};
+namespace thread_sync {
+	class AbstractFixnumLockable : public FixnumLockable {
+	public:
+		AbstractFixnumLockable(allocator::IDAllocator* allocator);
+		unsigned int get_id()override;
+		bool register_thread()override;
+		void unregister_thread()override;
+		void reset(unsigned int new_max_id)override;
+		void reset(unsigned int new_min_id, unsigned int new_max_id)override;
+	private:
+		allocator::IDAllocator* allocator;
+		thread_local static int thread_id;
+		std::atomic_flag lock = ATOMIC_FLAG_INIT;
+	};
+}
