@@ -2,11 +2,13 @@
 #include "UnregisteredThreadException.h"
 
 namespace thread_sync::allocator {
-	IDAllocator::IDAllocator(unsigned int max_id) {
+	IDAllocator::IDAllocator(unsigned int max_id) : min_id(-1), max_id(-1),MaxNumberOfThreads(20),number_of_registered_threads(0),
+		size_of_thread_id_array(0) {
 		init_values(0, max_id);
 	}
 
-	IDAllocator::IDAllocator(unsigned int min_id, unsigned int max_id) {
+	IDAllocator::IDAllocator(unsigned int min_id, unsigned int max_id) : min_id(-1), max_id(-1), MaxNumberOfThreads(20),
+		number_of_registered_threads(0), size_of_thread_id_array(0) {
 		init_values(min_id, max_id);
 	}
 

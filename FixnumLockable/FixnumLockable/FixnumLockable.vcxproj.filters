@@ -35,13 +35,7 @@
     <ClInclude Include="AbstractFixnumLockable.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="BasicLockable.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="FixnumLockable.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Lockable.h">
+    <ClInclude Include="LockableConcepts.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

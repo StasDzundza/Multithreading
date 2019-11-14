@@ -130,10 +130,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractFixnumLockable.h" />
-    <ClInclude Include="BasicLockable.h" />
-    <ClInclude Include="FixnumLockable.h" />
     <ClInclude Include="IDAllocator.h" />
-    <ClInclude Include="Lockable.h" />
+    <ClInclude Include="LockableConcepts.h" />
     <ClInclude Include="UnregisteredThreadException.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,7 +1,7 @@
 #pragma once
 #include <atomic>
 
-#include "FixnumLockable.h"
+#include "LockableConcepts.h"
 #include "IDAllocator.h"
 
 namespace thread_sync {
