@@ -13,7 +13,7 @@ namespace thread_sync::allocator {
 		void clear_thread_id_array();
 		void reset_values(unsigned int min_id, unsigned int max_id);
 		void init_values(unsigned int min_id, unsigned int max_id);
-		int min_id, max_id;
+		unsigned int min_id, max_id;
 		const int MaxNumberOfThreads;
 		int number_of_registered_threads;
 		int length_of_range;

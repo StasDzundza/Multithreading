@@ -62,9 +62,9 @@ namespace thread_sync::allocator {
 			if (this->thread_id[i]) {
 				*(this->thread_id[i]) = -1;
 				this->thread_id[i] = nullptr;
-				size_of_thread_id_array--;
 			}
 		}
+		size_of_thread_id_array = 0;
 	}
 
 	void IDAllocator::reset_values(unsigned int min_id, unsigned int max_id) {
