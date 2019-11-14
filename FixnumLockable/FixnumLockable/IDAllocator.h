@@ -1,0 +1,19 @@
+#pragma once
+
+class IDAllocator {
+public:
+	IDAllocator(unsigned int min_id);
+	IDAllocator(unsigned int min_id, unsigned int max_id);
+	int alloc();
+	bool free(int id);
+	void reset(unsigned int max_id);
+	void reset(unsigned int min_id, unsigned int max_id);
+private:
+	int min_id = -1, max_id = -1;
+	const int MaxNumberOfThreads = 20;
+	int number_of_registered_threads = 0;
+	int length_of_range;
+	bool *id_array;
+	int** thread_id;
+	int size_of_thread_id_array = 0;
+};

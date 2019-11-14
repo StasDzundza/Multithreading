@@ -7,9 +7,9 @@ using std::thread;
 
 class FixnumLockable : public Lockable {
 public:
-	virtual unsigned int get_id(const thread::id& id) = 0;
-	virtual bool _register(const thread::id& id) = 0;
-	virtual void unregister(const thread::id& id) = 0;
-protected:
-	const int NumberOfThreads = 5;
+	virtual unsigned int get_id() = 0;
+	virtual bool _register() = 0;
+	virtual void unregister() = 0;
+	virtual void reset(int new_max_id) = 0;
+	virtual void reset(int new_min_id,int new_max_id) = 0;
 };

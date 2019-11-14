@@ -1,17 +1,17 @@
 #pragma once
 
 #include"FixnumLockable.h"
-#include<unordered_map>//Hash Table
-
-using std::unordered_map;
+#include"IDAllocator.h"
 
 class AbstractFixnumLockable : public FixnumLockable {
 public:
-	AbstractFixnumLockable();
-	unsigned int get_id(const thread::id& id)override;
-	bool _register(const thread::id& id)override;
-	void unregister(const thread::id& id)override;
+	AbstractFixnumLockable(IDAllocator* allocator);
+	unsigned int get_id()override;
+	bool _register()override;
+	void unregister()override;
+	void reset(int new_max_id)override;
+	void reset(int new_min_id,int new_max_id)override;
 private:
-	unordered_map<thread::id, unsigned int> threads_id;
-	bool* free_id;
+	IDAllocator* allocator;
+	thread_local static int thread_id;
 };
