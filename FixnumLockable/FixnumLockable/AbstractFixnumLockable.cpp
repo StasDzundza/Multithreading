@@ -12,13 +12,17 @@ unsigned int AbstractFixnumLockable::get_id(){
 		return thread_id;
 	}
 	else {
-		thread_id = allocator->alloc();
+		while (lock.test_and_set()) {}
+		thread_id = allocator->alloc(&thread_id);
+		lock.clear();
 		return thread_id;
 	}
 }
 
 bool AbstractFixnumLockable::_register(){
-	thread_id = allocator->alloc();
+	while (lock.test_and_set()) {}
+	thread_id = allocator->alloc(&thread_id);
+	lock.clear();
 	return (thread_id < 0) ? false : true;
 }
 
@@ -29,9 +33,9 @@ void AbstractFixnumLockable::unregister(){
 }
 
 void AbstractFixnumLockable::reset(int new_max_id){
-	//set new range or max to allocator
+	allocator->reset(new_max_id);
 }
 
-void AbstractFixnumLockable::reset(int new_min_id, int new_max_id)
-{
+void AbstractFixnumLockable::reset(int new_min_id, int new_max_id){
+	allocator->reset(new_min_id, new_max_id);
 }

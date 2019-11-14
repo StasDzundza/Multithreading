@@ -2,6 +2,7 @@
 
 #include"FixnumLockable.h"
 #include"IDAllocator.h"
+#include<atomic>
 
 class AbstractFixnumLockable : public FixnumLockable {
 public:
@@ -14,4 +15,5 @@ public:
 private:
 	IDAllocator* allocator;
 	thread_local static int thread_id;
+	std::atomic_flag lock = ATOMIC_FLAG_INIT;
 };
