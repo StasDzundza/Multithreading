@@ -1,12 +1,12 @@
+#include "AbstractFixnumLockable.h"
+
 #include <algorithm>
 #include <thread>
-
-#include "AbstractFixnumLockable.h"
 
 namespace thread_sync {
 	thread_local int AbstractFixnumLockable::thread_id = -1;
 
-	AbstractFixnumLockable::AbstractFixnumLockable(allocator::IDAllocator* allocator) {
+	AbstractFixnumLockable::AbstractFixnumLockable(allocator::IDAllocator* allocator) : lock(ATOMIC_FLAG_INIT) {
 		this->allocator = allocator;
 	}
 

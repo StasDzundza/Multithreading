@@ -1,8 +1,8 @@
 #pragma once
-#include <atomic>
-
 #include "LockableConcepts.h"
 #include "IDAllocator.h"
+
+#include <atomic>
 
 namespace thread_sync {
 	class AbstractFixnumLockable : public FixnumLockable {
@@ -16,6 +16,6 @@ namespace thread_sync {
 	private:
 		allocator::IDAllocator* allocator;
 		thread_local static int thread_id;
-		std::atomic_flag lock = ATOMIC_FLAG_INIT;
+		std::atomic_flag lock;
 	};
 }
