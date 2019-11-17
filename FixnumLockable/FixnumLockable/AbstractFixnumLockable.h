@@ -16,6 +16,6 @@ namespace thread_sync {
 	private:
 		allocator::IDAllocator* allocator;
 		thread_local static int thread_id;
-		std::atomic_flag lock;
+		std::atomic_flag lock = ATOMIC_FLAG_INIT;
 	};
 }

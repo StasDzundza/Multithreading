@@ -8,7 +8,7 @@ namespace thread_sync {
 
 	class Lockable : public BasicLockable {
 	public:
-		virtual void try_lock() = 0;
+		virtual bool try_lock() = 0;
 	};
 
 	class FixnumLockable : public Lockable {

@@ -6,7 +6,7 @@
 namespace thread_sync {
 	thread_local int AbstractFixnumLockable::thread_id = -1;
 
-	AbstractFixnumLockable::AbstractFixnumLockable(allocator::IDAllocator* allocator) : lock(ATOMIC_FLAG_INIT) {
+	AbstractFixnumLockable::AbstractFixnumLockable(allocator::IDAllocator* allocator) {
 		this->allocator = allocator;
 	}
 
