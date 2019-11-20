@@ -13,7 +13,7 @@ namespace thread_sync {
 
 	AbstractFixnumLockable::AbstractFixnumLockable(int max_number_of_threads){
 		this->max_number_of_threads = max_number_of_threads;
-		allocator = new allocator::IDAllocator(max_number_of_threads);
+		allocator = new allocator::IDAllocator(max_number_of_threads - 1);//because id starts from 0
 		allocator->set_max_number_of_threads(max_number_of_threads);
 	}
 
@@ -53,6 +53,7 @@ namespace thread_sync {
 			throw new UnregisteredThreadException(thread_id);
 		}
 		unlock(thread_id);
+		unregister_thread();//?
 	}
 	bool AbstractFixnumLockable::try_lock(){
 		int prev_id = thread_id;
