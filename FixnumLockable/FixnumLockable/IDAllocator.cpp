@@ -60,7 +60,7 @@ namespace thread_sync::allocator {
 	}
 
 	void IDAllocator::set_max_number_of_threads(int max_number_of_threads){
-		max_number_of_threads = max_number_of_threads;
+		this->max_number_of_threads = max_number_of_threads;
 	}
 
 	bool IDAllocator::reset_values(unsigned int min_id, unsigned int max_id) {
