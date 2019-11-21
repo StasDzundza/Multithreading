@@ -54,7 +54,7 @@ namespace thread_sync {
 			throw new UnregisteredThreadException(thread_id);
 		}
 		unlock(thread_id);
-		unregister_thread();
+		//unregister_thread();
 	}
 	bool AbstractFixnumLockable::try_lock(){
 		int prev_id = thread_id;
