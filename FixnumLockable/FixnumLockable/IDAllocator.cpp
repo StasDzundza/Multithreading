@@ -38,7 +38,7 @@ namespace thread_sync::allocator {
 		while (locker.test_and_set()) { std::this_thread::yield(); }
 		if (thread_id < min_id || thread_id > max_id || id_bitset[thread_id - min_id] == 0) {
 			locker.clear();
-			throw new UnregisteredThreadException(thread_id);
+			throw UnregisteredThreadException(thread_id);
 		}
 		else {
 			id_bitset[thread_id - min_id] = 0;
@@ -67,7 +67,7 @@ namespace thread_sync::allocator {
 	}
 
 	bool IDAllocator::reset_values(unsigned int min_id, unsigned int max_id) {
-		if (number_of_registered_threads > 0) {
+		if (number_of_registered_threads == 0) {
 			this->min_id = min_id;
 			this->max_id = max_id;
 			id_bitset.reset();

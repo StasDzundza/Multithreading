@@ -30,7 +30,9 @@ namespace thread_sync {
 	}
 
 	bool AbstractFixnumLockable::register_thread() {
-		thread_id = allocator->alloc();
+		if (thread_id < 0) {
+			thread_id = allocator->alloc();
+		}
 		return (thread_id < 0) ? false : true;
 	}
 
@@ -51,10 +53,9 @@ namespace thread_sync {
 	}
 	void AbstractFixnumLockable::unlock(){
 		if (thread_id < 0){
-			throw new UnregisteredThreadException(thread_id);
+			throw UnregisteredThreadException(thread_id);
 		}
 		unlock(thread_id);
-		//unregister_thread();
 	}
 	bool AbstractFixnumLockable::try_lock(){
 		int prev_id = thread_id;
@@ -65,7 +66,6 @@ namespace thread_sync {
 		else {
 			return false;
 		}
-
 	}
 	int AbstractFixnumLockable::get_max_number_of_threads(){
 		return max_number_of_threads;

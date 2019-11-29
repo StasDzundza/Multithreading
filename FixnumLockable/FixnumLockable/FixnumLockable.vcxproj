@@ -127,11 +127,14 @@
     <ClCompile Include="AbstractFixnumLockable.cpp" />
     <ClCompile Include="IDAllocator.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TestFixnumLockable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractFixnumLockable.h" />
     <ClInclude Include="IDAllocator.h" />
     <ClInclude Include="LockableConcepts.h" />
+    <ClInclude Include="TestFixnumLockable.h" />
+    <ClInclude Include="Tests.h" />
     <ClInclude Include="UnregisteredThreadException.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
